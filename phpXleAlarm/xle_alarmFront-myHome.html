@@ -1,0 +1,269 @@
+<head>
+<style>
+	.zoneInfo {
+		background-color:#ECECEC;
+		width: 90%;
+		margin: 10px auto;
+		border:1px solid black;
+		font-size: 12px;
+	}
+
+	.zoneRed{
+		color:red;
+	}
+	legend {
+		color:black;
+		font-weight: bold;
+		display: block;
+		font-size:20px;
+	}
+	#id-date {
+		position:absolute;
+		z-index: 1;
+		font-size:10px;
+	}
+	
+	#id-maison { 
+		position: relative;
+		background-image: url(img/myHome-simple.png); 
+		background-size: 695px 300px;
+		border: 1px solid black; 
+		width: 700px; height: 300px;
+		margin: 50px auto;
+	}
+
+	.image-alarm { background-color: blue; height:25px; }
+	.detect-move, .detect-open { 
+		position: absolute;
+		top: 0px;
+		background-color: blue; 
+		
+		z-index: 1;
+		width:20px; height: 20px; 
+		background-size : 20px 20px; background-repeat: no-repeat;
+	}
+	.detect-move { 
+		background-image: url(img/camera-move.png); 
+	}
+	.detect-open { 
+		background-image: url(img/camera-open.png); 
+	}
+</style>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+</head>
+<body>
+	<div id="id-maison" class="relative">
+		<div id="id-date" style="top:285px;left:2px;">-</div>
+	
+		<div id="test-openwindow" class="detect-open device" style="top:5px;left:5px;" title="xxx"></div>
+		<div id="test-movedetect" class="detect-move device" style="top:50px;left:5px;" title="xxx"></div>
+
+
+		<div id="garage-opendoor" class="detect-open device" style="top:130px;left:43px;" title="xxx"></div>
+		
+		<div id="cuisine-movedetect" class="detect-move device" style="top:110px;left:140px;" title="xxx"></div>
+		<div id="cuisine-opendoor" class="detect-open device" style="top:140px;left:135px;" title="xxx"></div>
+		<div id="cuisine-openwindow" class="detect-open device" style="top:30px;left:103px;" title="xxx"></div>
+		
+		<div id="salon-movedetect1" class="detect-move device" style="top:170px;left:290px;" title="xxx"></div>
+		<div id="salon-movedetect2" class="detect-move device" style="top:40px;left:290px;" title="xxx"></div>
+		<div id="salon-openwindow1" class="detect-open device" style="top:30px;left:178px;" title="xxx"></div>
+		<div id="salon-openwindow2" class="detect-open device" style="top:30px;left:255px;" title="xxx"></div>
+		<div id="salon-openwindow3" class="detect-open device" style="top:142px;left:300px;" title="xxx"></div>
+
+		<div id="entree-movedetect" class="detect-move device" style="top:125px;left:194px;" title="xxx"></div>
+		<div id="entree-openwdoor" class="detect-open device" style="top:220px;left:195px;" title="xxx"></div>
+		
+		<div id="bureau-openwindow"  class="detect-open device" style="top:254px;left:263px;" title="xxx"></div>
+		
+		<div id="chbsuzie-openwindow" class="detect-open device" style="top:170px;left:403px;" title="xxx"></div>
+		<div id="chbsuzie-movedetect" class="detect-move device" style="top:192px;left:490px;" title="xxx"></div>
+
+		<div id="palier-movedetect1" class="detect-move device" style="top:180px;left:557px;" title="xxx"></div>		
+		<div id="palier-movedetect2" class="detect-move device" style="top:102px;left:500px;" title="xxx"></div>		
+		
+	</div>
+	
+	<fieldset class="zoneInfo" style="height:120px;">
+		<legend>Alarmessssss</legend>
+		<div style="width:200px;height:90px;float:left;border-right:1px solid black;">
+			zone-move (<span id="zone-move" class="alarm-color">-</span>) : <img src='img/gyrophare.png' id="zone-move-image" class="image-alarm"><br>
+			zone-peripherique (<span id="zone-peripherique" class="alarm-color">-</span>) : <img src='img/gyrophare.png' id="zone-peripherique-image" class="image-alarm">
+		</div>
+		<div id="id-alarmsDevices" class="zoneRed">
+		../..
+		</div>
+	</fieldset>
+	
+	<fieldset class="zoneInfo zoneRed">
+		<legend>Devices inconnus</legend>
+		<div id="id-devicesinconnus" >
+		../..
+		</div>
+	</fieldset>
+	
+	<fieldset class="zoneInfo zoneRed">
+		<legend>Last events</legend>
+		<div id="id-events" >
+		../..
+		</div>
+	</fieldset>
+
+<script type="text/javascript">
+	var iDebug=0;
+	
+	function rgb2hex(orig){
+ var rgb = orig.replace(/\s/g,'').match(/^rgba?\((\d+),(\d+),(\d+)/i);
+ return (rgb && rgb.length === 4) ? "#" +
+  ("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
+  ("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
+  ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : orig;
+}
+
+	function fl_ta_devices_htmlmap(){
+		// traitement
+		
+		if (iDebug >= 1 ) { console.log("::::fl_ta_devices_map: "+Date()); }
+		$.ajax({
+			typ0x00158d0002b44546e: "GET",
+			url: "ajax-getInfo.php?action=etatDevices",
+			success:function(data){	
+				if (iDebug >= 1 ) { console.log("fl_ta_devices_map: ajax : success : OK"); }
+				if (iDebug >= 3 ) { console.log(JSON.stringify(data)); }
+				
+				$("#id-devicesinconnus").html("");
+					
+				data.forEach(function(item) {
+					if (iDebug >= 2 ) { console.log("=>"+item); }
+					_device=item[0];	
+					_name=item[1];	
+					_etatcalc=item[2];
+					_etat=item[3];
+					_dateupdate=item[4];
+					_datelimit=item[5];
+					
+					if ( !$("#"+_name).length) { $("#id-devicesinconnus").append("=>Decice '"+_device+"' non trouvé dans le div='"+_name+"'<br>"); }
+					else {
+					
+						$("#"+_name).prop("title",item);
+						
+						if ( _etatcalc=="ok" ) { color="#26ec26"; /*green*/}
+						else if ( _etatcalc=="ko" ) {
+							__color=$("#"+_name).css("background-color");
+							if(__color!=undefined) { 
+								__colorId = rgb2hex(__color);
+								if ( __colorId == "#ff0000" ) { color="#ff6767"; /*red middle*/} else { color="#ff0000"; /*red*/}
+							} else { __color="#A9A9EB"; }
+						}
+						else { color="#A9A9EB"; /*????*/}
+						
+						$("#"+_name).css("background-color",color);
+					} //else ( !$("#"+_name).length)
+					
+				}); //forEach
+				
+			}, //success
+		});
+		
+		setTimeout(fl_ta_devices_htmlmap,2000); /* rappel après 2 secondes = 2000 millisecondes */
+	}
+
+	function fl_ta_events(){
+		// traitement
+		if (iDebug >= 1 ) { console.log(":::: fl_ta_events: "+Date()); }
+		$.ajax({
+			type: "GET",
+			url: "ajax-getInfo.php?action=lastEvents",
+			success:function(data){	
+				if (iDebug >= 1 ) { console.log("fl_ta_events: ajax : success : OK"); }
+				if (iDebug >= 3 ) { console.log(JSON.stringify(data)); }
+				
+				$("#id-events").html("");
+				data.forEach(function(item) {
+					$("#id-events").append("=>"+item+"<br>");
+				});
+			},
+		});
+		
+		setTimeout(fl_ta_events,2000); /* rappel après 2 secondes = 2000 millisecondes */
+	}
+
+	function fl_alarmsDevices(){
+		// traitement
+		if (iDebug >= 1 ) { console.log(":::: fl_alarmsDevices: "+Date()); }
+		$.ajax({
+			type: "GET",
+			url: "ajax-getInfo.php?action=alarmDevicesKO",
+			success:function(data){	
+				if (iDebug >= 1 ) {  console.log("fl_alarmsDevices: ajax : success : OK"); }
+				if (iDebug >= 3 ) { console.log(JSON.stringify(data)); }
+				
+				$("#id-alarmsDevices").html("");
+				data.forEach(function(item) {
+					$("#id-alarmsDevices").appen
+d("=>"+item+"<br>");
+				});
+			},
+		});
+		
+		setTimeout(fl_alarmsDevices,2000); /* rappel après 2 secondes = 2000 millisecondes */
+	}
+	
+	function fl_alarmsSummary(){
+		// traitement
+		if (iDebug >= 1 ) { console.log(":::: fl_alarmsSummary: "+Date()); }
+		$.ajax({
+			type: "GET",
+			url: "ajax-getInfo.php?action=alarmSummaryKO",
+			success:function(data){	
+				if (iDebug >= 1 ) {  console.log("fl_alarmsSummary: ajax : success : OK"); }
+				if (iDebug >= 3 ) { console.log(JSON.stringify(data)); }
+				
+				data.forEach(function(item) {
+					_name=item[0];	
+					_etat=item[1];
+					_count=item[2];
+					
+					_color="blue";
+					if(_etat=="OFF") { _colorOnOff="grey"; _colorAlert="grey"; } 
+					if(_etat=="ON") { 
+						_colorOnOff="#57ff11"; 
+						if (_count==0) {_colorAlert="#57ff11"; } else { _colorAlert="red"; }
+					} 
+					// Texte ON/OFF
+					$("#"+_name).html(_etat);
+					$("#"+_name).css("background-color",_colorOnOff);
+					//Image gyrophare
+					$("#"+_name+"-image").prop("title",item);
+					$("#"+_name+"-image").css("background-color",_colorAlert);
+
+				});
+			},
+		});
+		
+		setTimeout(fl_alarmsSummary,2000); /* rappel après 2 secondes = 2000 millisecondes */
+	}	
+	function fl_updateDate(){
+		_now=new Date().toGMTString();
+		if (iDebug >= 1 ) { console.log(_now); }
+		$("#id-date").html(_now);
+		
+		setTimeout(fl_updateDate,2000);
+	}
+	
+	
+	fl_updateDate();
+	
+	fl_ta_devices_htmlmap();
+	
+	fl_alarmsSummary();
+	fl_alarmsDevices();
+	
+	fl_ta_events();
+	
+</script>
+
+
+
+</body>
